@@ -29,7 +29,42 @@ const io = socketIo(server, {
 });
 
 // Middleware
-app.use(helmet()); // Security headers
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "https://maps.googleapis.com",
+                "https://cdn.jsdelivr.net"
+            ],
+            styleSrc: [
+                "'self'",
+                "'unsafe-inline'",
+                "https://fonts.googleapis.com"
+            ],
+            fontSrc: [
+                "'self'",
+                "https://fonts.gstatic.com"
+            ],
+            imgSrc: [
+                "'self'",
+                "data:",
+                "https:",
+                "https://maps.googleapis.com",
+                "https://maps.gstatic.com",
+                "*.googleapis.com",
+                "*.gstatic.com"
+            ],
+            connectSrc: [
+                "'self'",
+                "https://maps.googleapis.com"
+            ],
+            frameSrc: ["'self'"]
+        }
+    }
+})); // Security headers with CSP for Google Maps
 app.use(compression()); // Compress responses
 app.use(cors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000',

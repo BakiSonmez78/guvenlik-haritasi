@@ -1,0 +1,15 @@
+# GitHub'a Yükleme Komutları
+# Bu dosyadaki komutları sırayla çalıştırın
+
+# 1. Git remote ekleyin (YOUR_USERNAME yerine GitHub kullanıcı adınızı yazın)
+git remote add origin https://github.com/YOUR_USERNAME/guvenlik-haritasi.git
+
+# 2. Branch'i main olarak ayarlayın
+git branch -M main
+
+# 3. GitHub'a push edin
+git push -u origin main
+
+# Not: İlk push için GitHub kullanıcı adı ve Personal Access Token isteyecek
+# Token oluşturmak için: https://github.com/settings/tokens
+# Scope: "repo" seçin

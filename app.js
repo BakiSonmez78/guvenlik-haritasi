@@ -15,51 +15,23 @@ const AppState = {
     charts: {}
 };
 
-// ===== MOCK CRIME DATA =====
-// In a real app, this would come from a database or API
-// ===== MOCK CRIME DATA (Generated for Istanbul Demo) =====
+// ===== MOCK CRIME DATA (CLEANED) =====
 const MOCK_CRIME_DATA = {
-    // Generate ~100 random incidents across Istanbul center
-    incidents: Array.from({ length: 150 }, () => {
-        const types = ['theft', 'suspicious', 'accident', 'harassment', 'other'];
-        const type = types[Math.floor(Math.random() * types.length)];
-        const latBase = 41.0082;
-        const lngBase = 28.9784;
+    // Start with EMPTY incidents - real users will populate this
+    incidents: [],
 
-        // Random spread within ~5km
-        const lat = latBase + (Math.random() - 0.5) * 0.08;
-        const lng = lngBase + (Math.random() - 0.5) * 0.12;
-
-        return {
-            type,
-            lat,
-            lng,
-            time: Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000), // Last 7 days
-            severity: Math.random() > 0.7 ? 'high' : (Math.random() > 0.4 ? 'medium' : 'low')
-        };
-    }),
-
-    // Neighborhood safety scores
+    // Neighborhood safety scores (Default baselines)
     neighborhoods: {
-        'Beyoğlu': { score: 7.2, trend: 'positive', change: '+0.3' },
-        'Kadıköy': { score: 8.5, trend: 'positive', change: '+0.5' },
+        'Beyoğlu': { score: 7.2, trend: 'neutral', change: '0.0' },
+        'Kadıköy': { score: 8.5, trend: 'neutral', change: '0.0' },
         'Şişli': { score: 7.8, trend: 'neutral', change: '0.0' },
-        'Beşiktaş': { score: 8.2, trend: 'positive', change: '+0.2' },
-        'Üsküdar': { score: 8.7, trend: 'positive', change: '+0.4' },
-        'Fatih': { score: 6.9, trend: 'negative', change: '-0.2' }
+        'Beşiktaş': { score: 8.2, trend: 'neutral', change: '0.0' },
+        'Üsküdar': { score: 8.7, trend: 'neutral', change: '0.0' },
+        'Fatih': { score: 6.9, trend: 'neutral', change: '0.0' }
     },
 
-    // Crime type distribution
-    crimeTypes: {
-        'theft': 45,
-        'suspicious': 25,
-        'accident': 15,
-        'harassment': 10,
-        'other': 5
-    },
-
-    // Time-based analysis
-    timeDistribution: [2, 1, 1, 0, 0, 1, 3, 5, 8, 6, 4, 5, 7, 6, 5, 4, 6, 8, 10, 12, 9, 7, 5, 3]
+    crimeTypes: { 'theft': 0, 'suspicious': 0, 'accident': 0, 'harassment': 0, 'other': 0 },
+    timeDistribution: Array(24).fill(0)
 };
 
 // ===== INITIALIZATION =====

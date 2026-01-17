@@ -17,20 +17,29 @@ const AppState = {
 
 // ===== MOCK CRIME DATA =====
 // In a real app, this would come from a database or API
+// ===== MOCK CRIME DATA (Generated for Istanbul Demo) =====
 const MOCK_CRIME_DATA = {
-    // Crime incidents (anonymous, location-based only)
-    incidents: [
-        { type: 'theft', lat: 41.0095, lng: 28.9795, time: Date.now() - 3600000, severity: 'medium' },
-        { type: 'suspicious', lat: 41.0105, lng: 28.9805, time: Date.now() - 7200000, severity: 'low' },
-        { type: 'theft', lat: 41.0085, lng: 28.9785, time: Date.now() - 10800000, severity: 'medium' },
-        { type: 'accident', lat: 41.0115, lng: 28.9815, time: Date.now() - 14400000, severity: 'low' },
-        { type: 'harassment', lat: 41.0075, lng: 28.9775, time: Date.now() - 18000000, severity: 'high' },
-        { type: 'theft', lat: 41.0125, lng: 28.9825, time: Date.now() - 21600000, severity: 'medium' },
-        { type: 'suspicious', lat: 41.0065, lng: 28.9765, time: Date.now() - 25200000, severity: 'low' },
-        { type: 'theft', lat: 41.0135, lng: 28.9835, time: Date.now() - 28800000, severity: 'medium' }
-    ],
+    // Generate ~100 random incidents across Istanbul center
+    incidents: Array.from({ length: 150 }, () => {
+        const types = ['theft', 'suspicious', 'accident', 'harassment', 'other'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        const latBase = 41.0082;
+        const lngBase = 28.9784;
 
-    // Neighborhood safety scores (1-10, higher is safer)
+        // Random spread within ~5km
+        const lat = latBase + (Math.random() - 0.5) * 0.08;
+        const lng = lngBase + (Math.random() - 0.5) * 0.12;
+
+        return {
+            type,
+            lat,
+            lng,
+            time: Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000), // Last 7 days
+            severity: Math.random() > 0.7 ? 'high' : (Math.random() > 0.4 ? 'medium' : 'low')
+        };
+    }),
+
+    // Neighborhood safety scores
     neighborhoods: {
         'Beyoğlu': { score: 7.2, trend: 'positive', change: '+0.3' },
         'Kadıköy': { score: 8.5, trend: 'positive', change: '+0.5' },
@@ -49,7 +58,7 @@ const MOCK_CRIME_DATA = {
         'other': 5
     },
 
-    // Time-based analysis (hourly distribution)
+    // Time-based analysis
     timeDistribution: [2, 1, 1, 0, 0, 1, 3, 5, 8, 6, 4, 5, 7, 6, 5, 4, 6, 8, 10, 12, 9, 7, 5, 3]
 };
 
@@ -369,14 +378,14 @@ function initializeHeatmap() {
 }
 
 function toggleHeatmap(e) {
-    if (e.target.checked) {
-        AppState.heatmap.setMap(AppState.map);
-    } else {
-        AppState.heatmap.setMap(null);
+    if (AppState.heatmap) {
+        AppState.heatmap.setMap(e.target.checked ? AppState.map : null);
     }
 }
 
 function updateHeatmapData() {
+    if (!AppState.heatmap) return;
+
     const timeRange = parseInt(document.getElementById('heatmapTimeRange').value);
     const cutoffTime = Date.now() - (timeRange * 24 * 60 * 60 * 1000);
 
@@ -417,27 +426,47 @@ function stopLocationSharing() {
     }
 }
 
-// ===== SAFETY POINTS =====
+// ===== SAFETY POINTS (GOOGLE PLACES API) =====
 function addSafetyPoints() {
-    const policeStations = [
-        { lat: 41.0082, lng: 28.9784, name: 'Merkez Polis Karakolu' },
-        { lat: 41.0150, lng: 28.9850, name: 'Beyoğlu Polis Karakolu' },
-        { lat: 41.0050, lng: 28.9700, name: 'Eminönü Polis Karakolu' }
-    ];
+    // Perform search for each type
+    searchNearbyPlaces('police', 'police');
+    searchNearbyPlaces('hospital', 'hospital');
+    searchNearbyPlaces('pharmacy', 'pharmacy');
+}
 
-    const hospitals = [
-        { lat: 41.0100, lng: 28.9800, name: 'Şehir Hastanesi' },
-        { lat: 41.0200, lng: 28.9900, name: 'Merkez Hastanesi' }
-    ];
+function searchNearbyPlaces(keyword, type) {
+    if (!AppState.map) return;
 
-    const pharmacies = [
-        { lat: 41.0090, lng: 28.9790, name: 'Nöbetçi Eczane' },
-        { lat: 41.0120, lng: 28.9820, name: 'Merkez Eczane' }
-    ];
+    const request = {
+        location: AppState.map.getCenter(),
+        radius: '5000', // 5km search radius
+        type: [type] // Google Places type
+    };
 
-    policeStations.forEach(station => addSafetyMarker(station, 'police', '👮', '#3B82F6'));
-    hospitals.forEach(hospital => addSafetyMarker(hospital, 'hospital', '🏥', '#EF4444'));
-    pharmacies.forEach(pharmacy => addSafetyMarker(pharmacy, 'pharmacy', '💊', '#10B981'));
+    const service = new google.maps.places.PlacesService(AppState.map);
+    service.nearbySearch(request, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+            results.forEach(place => {
+                // Determine icon and color based on type
+                let icon = '📍';
+                let color = '#777777';
+                let typeKey = 'places';
+
+                if (type === 'police') { icon = '👮'; color = '#3B82F6'; typeKey = 'police'; }
+                else if (type === 'hospital') { icon = '🏥'; color = '#EF4444'; typeKey = 'hospital'; }
+                else if (type === 'pharmacy') { icon = '💊'; color = '#10B981'; typeKey = 'pharmacy'; }
+
+                addSafetyMarker({
+                    lat: place.geometry.location.lat(),
+                    lng: place.geometry.location.lng(),
+                    name: place.name,
+                    address: place.vicinity
+                }, typeKey, icon, color);
+            });
+        } else {
+            console.log(`No results for ${type}:`, status);
+        }
+    });
 }
 
 function addSafetyMarker(location, type, icon, color) {
@@ -445,24 +474,31 @@ function addSafetyMarker(location, type, icon, color) {
         position: { lat: location.lat, lng: location.lng },
         map: AppState.map,
         title: location.name,
-        label: { text: icon, fontSize: '24px' },
-        animation: google.maps.Animation.DROP
+        // Custom simple icon logic if AdvancedMarker is tricky with Places results
+        label: { text: icon, fontSize: '20px' },
+        opacity: 0.9
     });
 
     const infoWindow = new google.maps.InfoWindow({
         content: `
-            <div style="padding: 10px; color: #1a1a1a;">
-                <h3 style="margin: 0 0 8px 0; color: ${color};">${icon} ${location.name}</h3>
-                <p style="margin: 0; font-size: 14px;">Tür: ${getTypeLabel(type)}</p>
+            <div style="padding: 10px; color: #1a1a1a; max-width: 200px;">
+                <h3 style="margin: 0 0 5px 0; font-size: 16px; color: ${color};">${icon} ${location.name}</h3>
+                <p style="margin: 0 0 8px 0; font-size: 12px; color: #555;">${location.address || ''}</p>
+                <p style="margin: 0; font-size: 12px; font-weight: bold;">${getTypeLabel(type)}</p>
                 <button onclick="getDirectionsTo(${location.lat}, ${location.lng})" 
-                        style="margin-top: 10px; padding: 8px 16px; background: ${color}; color: white; border: none; border-radius: 6px; cursor: pointer;">
-                    Yol Tarifi Al
+                        style="margin-top: 8px; width: 100%; padding: 6px; background: ${color}; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Yol Tarifi
                 </button>
             </div>
         `
     });
 
     marker.addListener('click', () => infoWindow.open(AppState.map, marker));
+
+    // Check filter state before showing
+    const isVisible = document.getElementById(`${type === 'safe_zone' ? 'safeZone' : type}Layer`)?.checked ?? true;
+    marker.setVisible(isVisible);
+
     AppState.markers.push({ type, marker, data: location });
 }
 

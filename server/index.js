@@ -59,7 +59,8 @@ app.use(helmet({
             ],
             connectSrc: [
                 "'self'",
-                "https://maps.googleapis.com"
+                "https://maps.googleapis.com",
+                "https://cdn.jsdelivr.net"
             ],
             frameSrc: ["'self'"]
         }

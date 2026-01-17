@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Güvenlik Haritası - Güvenli Şehir Uygulaması</title>
+    <meta name="description"
+        content="Çevrenizdeki güvenlik noktalarını keşfedin, konumunuzu paylaşın ve güvenli rotalar oluşturun.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- Privacy Consent Modal -->
+    <div id="privacyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🛡️ Gizlilik ve Güvenlik</h2>
+            </div>
+            <div class="modal-body">
+                <p class="privacy-intro">Güvenlik Haritası uygulaması, güvenliğinizi artırmak için konumunuzu kullanır.
+                </p>
+
+                <div class="privacy-section">
+                    <h3>📍 Konum Verileriniz</h3>
+                    <ul>
+                        <li>Konumunuz <strong>sadece sizin kontrolünüzde</strong> paylaşılır</li>
+                        <li>Verileriniz <strong>şifrelenerek</strong> korunur</li>
+                        <li>İstediğiniz zaman <strong>paylaşımı durdurabilirsiniz</strong></li>
+                        <li>Verileriniz <strong>üçüncü taraflarla paylaşılmaz</strong></li>
+                    </ul>
+                </div>
+
+                <div class="privacy-section">
+                    <h3>✅ Haklarınız (KVKV Uyumlu)</h3>
+                    <ul>
+                        <li>Verilerinize erişim hakkı</li>
+                        <li>Verilerin silinmesini talep etme hakkı</li>
+                        <li>İzni geri çekme hakkı</li>
+                        <li>Veri taşınabilirliği hakkı</li>
+                    </ul>
+                </div>
+
+                <div class="consent-options">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="locationConsent">
+                        <span class="checkmark"></span>
+                        <span class="consent-text">Konumumu güvenlik hizmetleri için kullanılmasına <strong>açık
+                                rıza</strong> gösteriyorum</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="acceptConsent" class="btn btn-primary" disabled>Kabul Et ve Devam Et</button>
+                <button id="declineConsent" class="btn btn-secondary">Reddet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🛡️</span>
+                    <span class="logo-text">Güvenlik Haritası</span>
+                </div>
+                <div class="header-actions">
+                    <button id="emergencyBtn" class="btn btn-emergency">
+                        <span class="emergency-icon">🚨</span>
+                        <span>ACİL DURUM</span>
+                    </button>
+                    <button id="settingsBtn" class="btn btn-icon">⚙️</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="panel-section">
+                <h3>🎯 Güvenlik Katmanları</h3>
+                <div class="layer-controls">
+                    <label class="layer-toggle">
+                        <input type="checkbox" id="policeLayer" checked>
+                        <span class="layer-icon">👮</span>
+                        <span>Polis Karakolu</span>
+                    </label>
+                    <label class="layer-toggle">
+                        <input type="checkbox" id="hospitalLayer" checked>
+                        <span class="layer-icon">🏥</span>
+                        <span>Hastane</span>
+                    </label>
+                    <label class="layer-toggle">
+                        <input type="checkbox" id="pharmacyLayer" checked>
+                        <span class="layer-icon">💊</span>
+                        <span>Eczane</span>
+                    </label>
+                    <label class="layer-toggle">
+                        <input type="checkbox" id="safeZoneLayer">
+                        <span class="layer-icon">🏛️</span>
+                        <span>Güvenli Bölge</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>📡 Konum Paylaşımı</h3>
+                <div class="location-sharing">
+                    <button id="shareLocationBtn" class="btn btn-share">
+                        <span class="share-icon">📍</span>
+                        <span>Konumumu Paylaş</span>
+                    </button>
+                    <div id="sharingStatus" class="sharing-status hidden">
+                        <span class="status-indicator"></span>
+                        <span class="status-text">Konum paylaşılıyor...</span>
+                        <button id="stopSharingBtn" class="btn btn-stop">Durdur</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>🗺️ Güvenli Rota</h3>
+                <div class="route-planner">
+                    <input type="text" id="destinationInput" placeholder="Nereye gitmek istiyorsunuz?"
+                        class="route-input">
+                    <button id="findRouteBtn" class="btn btn-route">Güvenli Rota Bul</button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>� Suç Isı Haritası</h3>
+                <div class="heatmap-controls">
+                    <label class="layer-toggle">
+                        <input type="checkbox" id="heatmapLayer">
+                        <span class="layer-icon">🔥</span>
+                        <span>Isı Haritasını Göster</span>
+                    </label>
+                    <div class="heatmap-options">
+                        <label>Zaman Aralığı:</label>
+                        <select id="heatmapTimeRange" class="form-control-sm">
+                            <option value="7">Son 7 Gün</option>
+                            <option value="30" selected>Son 30 Gün</option>
+                            <option value="90">Son 90 Gün</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>📊 Mahalle Güvenlik Skoru</h3>
+                <div class="neighborhood-safety">
+                    <div id="currentNeighborhood" class="neighborhood-card">
+                        <div class="neighborhood-name">Konum alınıyor...</div>
+                        <div class="safety-score-container">
+                            <div class="safety-score" id="safetyScore">-</div>
+                            <div class="safety-label">Güvenlik Skoru</div>
+                        </div>
+                        <div class="safety-trend" id="safetyTrend"></div>
+                    </div>
+                    <button id="viewStatsBtn" class="btn btn-stats">
+                        <span>📈</span>
+                        <span>Detaylı İstatistikler</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>�📢 Topluluk Raporları</h3>
+                <div class="community-reports">
+                    <button id="reportIncidentBtn" class="btn btn-report">
+                        <span>⚠️</span>
+                        <span>Olay Bildir</span>
+                    </button>
+                    <div id="recentReports" class="recent-reports">
+                        <p class="no-reports">Yakınınızda son rapor yok</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Container -->
+        <div id="map" class="map-container"></div>
+
+        <!-- Info Panel -->
+        <div id="infoPanel" class="info-panel hidden">
+            <button class="close-btn" id="closeInfoPanel">×</button>
+            <div id="infoPanelContent"></div>
+        </div>
+
+        <!-- Emergency Modal -->
+        <div id="emergencyModal" class="modal hidden">
+            <div class="modal-content emergency-content">
+                <div class="modal-header emergency-header">
+                    <h2>🚨 ACİL DURUM</h2>
+                </div>
+                <div class="modal-body">
+                    <p class="emergency-text">Acil durum hizmetlerini arayın:</p>
+                    <div class="emergency-numbers">
+                        <a href="tel:155" class="emergency-number">
+                            <span class="number-icon">👮</span>
+                            <span class="number-label">Polis</span>
+                            <span class="number-value">155</span>
+                        </a>
+                        <a href="tel:112" class="emergency-number">
+                            <span class="number-icon">🚑</span>
+                            <span class="number-label">Ambulans</span>
+                            <span class="number-value">112</span>
+                        </a>
+                        <a href="tel:110" class="emergency-number">
+                            <span class="number-icon">🚒</span>
+                            <span class="number-label">İtfaiye</span>
+                            <span class="number-value">110</span>
+                        </a>
+                        <a href="tel:183" class="emergency-number">
+                            <span class="number-icon">🆘</span>
+                            <span class="number-label">Alo 183</span>
+                            <span class="number-value">183</span>
+                        </a>
+                    </div>
+                    <div class="emergency-location">
+                        <p><strong>Konumunuz:</strong></p>
+                        <p id="emergencyLocationText">Konum alınıyor...</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="closeEmergencyModal" class="btn btn-secondary">Kapat</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Modal -->
+        <div id="statsModal" class="modal hidden">
+            <div class="modal-content stats-modal">
+                <div class="modal-header">
+                    <h2>📊 Detaylı Suç İstatistikleri</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="stats-grid">
+                        <!-- Crime Type Distribution -->
+                        <div class="stat-card">
+                            <h3>🎯 Suç Türü Dağılımı</h3>
+                            <canvas id="crimeTypeChart"></canvas>
+                        </div>
+
+                        <!-- Time Analysis -->
+                        <div class="stat-card">
+                            <h3>⏰ Saat Bazlı Analiz</h3>
+                            <canvas id="timeAnalysisChart"></canvas>
+                        </div>
+
+                        <!-- Neighborhood Comparison -->
+                        <div class="stat-card full-width">
+                            <h3>🗺️ Mahalle Karşılaştırması</h3>
+                            <div id="neighborhoodComparison"></div>
+                        </div>
+
+                        <!-- Recent Incidents -->
+                        <div class="stat-card full-width">
+                            <h3>📋 Son Olaylar (Anonim)</h3>
+                            <div id="recentIncidents" class="incidents-list"></div>
+                        </div>
+
+                        <!-- Safety Tips -->
+                        <div class="stat-card full-width">
+                            <h3>💡 Güvenlik Önerileri</h3>
+                            <div id="safetyTips" class="safety-tips-list"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="closeStatsModal" class="btn btn-secondary">Kapat</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Modal -->
+        <div id="reportModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>⚠️ Olay Bildirimi</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Olay Türü:</label>
+                        <select id="incidentType" class="form-control">
+                            <option value="suspicious">Şüpheli Aktivite</option>
+                            <option value="theft">Hırsızlık</option>
+                            <option value="accident">Kaza</option>
+                            <option value="harassment">Taciz</option>
+                            <option value="other">Diğer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Açıklama:</label>
+                        <textarea id="incidentDescription" class="form-control" rows="4"
+                            placeholder="Olayı kısaca açıklayın..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="anonymousReport" checked>
+                            <span class="checkmark"></span>
+                            <span class="consent-text">Anonim olarak bildir</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="submitReport" class="btn btn-primary">Gönder</button>
+                    <button id="closeReportModal" class="btn btn-secondary">İptal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Harita yükleniyor...</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="app.js"></script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&libraries=places,visualization&callback=initMap"></script>
+</body>
+
+</html>

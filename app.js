@@ -652,13 +652,8 @@ function hideReportModal() {
 
 function submitReport() {
     const type = document.getElementById('incidentType').value;
-    const description = document.getElementById('incidentDescription').value;
+    // Description removed for safety/legal reasons
     const anonymous = document.getElementById('anonymousReport').checked;
-
-    if (!description.trim()) {
-        alert('Lütfen bir açıklama girin.');
-        return;
-    }
 
     if (!AppState.userLocation) {
         alert('Rapor göndermek için konum bilgisi gereklidir.');
@@ -668,11 +663,13 @@ function submitReport() {
     const report = {
         id: Date.now(),
         type,
-        description,
+        // No free text description
         anonymous,
         location: AppState.userLocation,
         timestamp: new Date().toISOString(),
-        severity: 'medium'
+        severity: 'medium',
+        score: 1, // Start with 1 verification score (the reporter)
+        verified: false
     };
 
     AppState.reports.push(report);
@@ -687,42 +684,80 @@ function submitReport() {
     addReportMarker(report);
     updateHeatmapData();
 
-    document.getElementById('incidentDescription').value = '';
     hideReportModal();
 
-    alert('Raporunuz başarıyla gönderildi. Teşekkür ederiz!');
+    alert('Raporunuz iletildi. Topluluk doğrulaması bekleniyor.');
 }
 
-function addReportMarker(report) {
-    const marker = new google.maps.Marker({
-        position: report.location,
+async function addReportMarker(report) {
+    const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary("marker");
+
+    const pin = new PinElement({
+        background: '#F59E0B',
+        borderColor: '#ffffff',
+        glyph: '⚠️',
+        glyphColor: '#ffffff',
+        scale: 1.0
+    });
+
+    const marker = new AdvancedMarkerElement({
         map: AppState.map,
-        icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 8,
-            fillColor: '#F59E0B',
-            fillOpacity: 0.8,
-            strokeColor: '#ffffff',
-            strokeWeight: 2
-        },
+        position: report.location,
+        content: pin.element,
         title: 'Topluluk Raporu'
     });
 
     const infoWindow = new google.maps.InfoWindow({
-        content: `
-            <div style="padding: 10px; color: #1a1a1a;">
-                <h3 style="margin: 0 0 8px 0; color: #F59E0B;">⚠️ ${getIncidentTypeLabel(report.type)}</h3>
-                <p style="margin: 0 0 8px 0; font-size: 14px;">${report.description}</p>
-                <p style="margin: 0; font-size: 12px; color: #666;">
-                    ${new Date(report.timestamp).toLocaleString('tr-TR')}
-                </p>
-            </div>
-        `
+        content: getReportInfoWindowContent(report)
     });
 
-    marker.addListener('click', () => infoWindow.open(AppState.map, marker));
+    marker.addListener('click', () => {
+        // Refresh content to show latest vote count
+        infoWindow.setContent(getReportInfoWindowContent(report));
+        infoWindow.open(AppState.map, marker);
+    });
+
     AppState.markers.push({ type: 'report', marker, data: report });
 }
+
+function getReportInfoWindowContent(report) {
+    const typeLabel = getIncidentTypeLabel(report.type);
+    const scoreColor = report.score >= 3 ? '#10B981' : '#F59E0B';
+    const statusText = report.score >= 3 ? 'Doğrulandı' : 'Doğrulama Bekliyor';
+
+    return `
+        <div style="padding: 10px; color: #1a1a1a; min-width: 200px;">
+            <h3 style="margin: 0 0 5px 0; color: #F59E0B;">⚠️ ${typeLabel}</h3>
+            <p style="margin: 0 0 10px 0; font-size: 12px; color: #666;">
+                ${new Date(report.timestamp).toLocaleString('tr-TR')}
+            </p>
+            
+            <div style="display: flex; align-items: center; justify-content: space-between; background: #f3f4f6; padding: 6px; border-radius: 4px; margin-bottom: 10px;">
+                <span style="font-size: 12px; font-weight: bold; color: ${scoreColor};">
+                    ${statusText} (${report.score})
+                </span>
+            </div>
+
+            <button onclick="verifyReport(${report.id})" 
+                    style="width: 100%; padding: 8px; background: #3B82F6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                👍 Ben de Gördüm (Doğrula)
+            </button>
+        </div>
+    `;
+}
+
+// Global function for verification button
+window.verifyReport = function (id) {
+    const report = AppState.reports.find(r => r.id === id);
+    if (report) {
+        report.score++;
+        if (report.score >= 3) {
+            report.verified = true;
+        }
+        alert('Doğrulama oyunuz alındı. Teşekkürler!');
+        // In a real app, verify button would become disabled for this user
+    }
+};
 
 function getIncidentTypeLabel(type) {
     const labels = {

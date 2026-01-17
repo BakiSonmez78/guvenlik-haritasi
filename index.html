@@ -286,21 +286,17 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label>Olay Türü:</label>
-                        <select id="incidentType" class="form-control">
+                        <label for="incidentType">Olay Türü</label>
+                        <select id="incidentType">
                             <option value="suspicious">Şüpheli Aktivite</option>
                             <option value="theft">Hırsızlık</option>
-                            <option value="accident">Kaza</option>
+                            <option value="accident">Trafik Kazası</option>
                             <option value="harassment">Taciz</option>
                             <option value="other">Diğer</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>Açıklama:</label>
-                        <textarea id="incidentDescription" class="form-control" rows="4"
-                            placeholder="Olayı kısaca açıklayın..."></textarea>
-                    </div>
-                    <div class="form-group">
+
+                    <div class="form-group checkbox-group">
                         <label class="checkbox-container">
                             <input type="checkbox" id="anonymousReport" checked>
                             <span class="checkmark"></span>
